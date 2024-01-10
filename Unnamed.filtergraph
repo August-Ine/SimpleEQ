@@ -61,11 +61,11 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
-  <FILTER uid="6" x="0.4825" y="0.5282258064516129" useARA="0" uiLastX_Normal="63"
-          uiLastY_Normal="220" uiopen_Normal="0">
+  <FILTER uid="6" x="0.4975" y="0.4737903225806452" useARA="0" uiLastX_Normal="45"
+          uiLastY_Normal="353" uiopen_Normal="0">
     <PLUGIN name="SimpleEQ" format="VST3" category="Fx" manufacturer="yourcompany"
             version="1.0.0" file="C:\Users\augustine\Programming\SimpleEQ\Builds\VisualStudio2022\x64\Debug\VST3\SimpleEQ.vst3\Contents\x86_64-win\SimpleEQ.vst3"
-            uniqueId="ff96df1d" isInstrument="0" fileTime="18cecf50879" infoUpdateTime="18ced5f2045"
+            uniqueId="ff96df1d" isInstrument="0" fileTime="18cf1d641b7" infoUpdateTime="18cf1e4f871"
             numInputs="2" numOutputs="2" isShell="0" hasARAExtension="0"
             uid="e9593cf0"/>
     <STATE>191.VMjLgXK....O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9XCLt3hKt3hKt3hKt3hYRUUSTEETIckVwTjQisVTTgkdEYjKAQjYPQSPWgUdMcjKAQjct3hdA4hKt3hKt3hKtnTUv.UQAslXuk0UXoWUFE0YQcEV77RRC8Vav8lak4Fc9vyKVMEUy.Ea0cVZtMEcgQWY9..</STATE>
@@ -78,6 +78,8 @@
       </OUTPUTS>
     </LAYOUT>
   </FILTER>
+  <CONNECTION srcFilter="1" srcChannel="0" dstFilter="6" dstChannel="0"/>
+  <CONNECTION srcFilter="1" srcChannel="1" dstFilter="6" dstChannel="1"/>
   <CONNECTION srcFilter="6" srcChannel="0" dstFilter="3" dstChannel="0"/>
   <CONNECTION srcFilter="6" srcChannel="1" dstFilter="3" dstChannel="1"/>
 </FILTERGRAPH>
