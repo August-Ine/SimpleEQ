@@ -35,8 +35,26 @@ private:
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
 
-    CustomRotarySlider peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlider, highCutFreqSlider,
-        lowCutSlopeSlider, highCutSlopeSlider;
+    CustomRotarySlider peakFreqSlider, 
+        peakGainSlider,
+        peakQualitySlider, 
+        lowCutFreqSlider, 
+        highCutFreqSlider,
+        lowCutSlopeSlider, 
+        highCutSlopeSlider;
+
+    //aliases
+    using APVTS = juce::AudioProcessorValueTreeState;
+    using Attachment = APVTS::SliderAttachment;
+
+    //slider Attachments
+    Attachment peakFreqSliderAttachment, 
+        peakGainSliderAttachment, 
+        peakQualitySliderAttachment, 
+        lowCutFreqSliderAttachment, 
+        highCutFreqSliderAttachment,
+        lowCutSlopeSliderAttachment, 
+        highCutSlopeSliderAttachment;
 
     //helper to get slider components in a vec
     std::vector<juce::Component*> getComps();
