@@ -36,12 +36,86 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
+    using namespace juce;
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.fillAll (Colours::black);
 
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    auto bounds = getLocalBounds();
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto width = responseArea.getWidth();
+
+    //get chain elements
+    auto& lowCut = monoChain.get<ChainPositions::LowCut>();
+    auto& peak = monoChain.get<ChainPositions::Peak>();
+    auto& highCut = monoChain.get<ChainPositions::HighCut>();
+
+    auto sampleRate = audioProcessor.getSampleRate();
+
+    std::vector<double> mags;
+    //preallocate space 
+    mags.resize(width);
+
+    //calculate magnittude for each pixel
+    for (int i = 0; i < width; ++i) {
+        double mag = 1.f;
+
+        //map normalised pixel number to its frequency in human hearing range
+        auto freq = mapToLog10(double(i) / double(width), 20.0, 20'000.0);
+        //get magnitude for pixel frequency if the band is not bypassed
+        //peak filter
+        if (!monoChain.isBypassed<ChainPositions::Peak>())
+            mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        //lowCut filter
+        if (!lowCut.isBypassed<0>())
+            mag *= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowCut.isBypassed<1>())
+            mag *= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowCut.isBypassed<2>())
+            mag *= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!lowCut.isBypassed<3>())
+            mag *= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+
+        //highCut filter
+        if (!highCut.isBypassed<0>())
+            mag *= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highCut.isBypassed<1>())
+            mag *= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highCut.isBypassed<2>())
+            mag *= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        if (!highCut.isBypassed<3>())
+            mag *= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        
+        //convert mag to decibels and store
+        mags[i] = Decibels::gainToDecibels(mag);
+    }
+
+    //build path
+    Path responseCurve;
+
+    //min and max window positions
+    const double outputMin = responseArea.getBottom();
+    const double outputMax = responseArea.getY();
+
+    //map decibel mag to responseArea
+    auto map = [outputMin, outputMax](double input) {
+        return jmap<double>(input, -24, 24, outputMin, outputMax);
+        };
+
+    //start new sub-path from left edge with the first magnitude
+    responseCurve.startNewSubPath(responseArea.getX(), map(mags.front()));
+    //create line-tos for every other magnitude
+    for (size_t i = 1; i < mags.size(); ++i) {
+        responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
+    };
+
+    //orange border
+    g.setColour(Colours::orange);
+    g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
+    
+    //draw response curve path
+    g.setColour(Colours::white);
+    g.strokePath(responseCurve, PathStrokeType(2.f));
 }
 
 void SimpleEQAudioProcessorEditor::resized()
