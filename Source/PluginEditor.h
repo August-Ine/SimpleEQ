@@ -11,17 +11,40 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
+struct ResponseCurveComponent :juce::Component, juce::AudioProcessorParameter::Listener,
+    juce::Timer 
+{
+    ResponseCurveComponent(SimpleEQAudioProcessor&);
+    ~ResponseCurveComponent();
+
+    //juce::AudioProcessorParameter::Listener overrides
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}; //EMPTY IMPLEMENTATION
+
+    //juce::Timer override
+    void timerCallback() override;
+
+    void paint(juce::Graphics&) override;
+
+private:
+    SimpleEQAudioProcessor& audioProcessor;
+    MonoChain monoChain;
+
+    juce::Atomic<bool> parametersChanged{ false };
+    
+};
+
 struct CustomRotarySlider : juce::Slider
 {
     CustomRotarySlider() :juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag,
         juce::Slider::TextEntryBoxPosition::NoTextBox
     ) {}
 };
+
 //==============================================================================
 /**
 */
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::AudioProcessorParameter::Listener,
-    juce::Timer
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
     SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
@@ -31,33 +54,10 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    //juce::AudioProcessorParameter::Listener overrides
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-
-    /** Indicates that a parameter change gesture has started.
-
-        E.g. if the user is dragging a slider, this would be called with gestureIsStarting
-        being true when they first press the mouse button, and it will be called again with
-        gestureIsStarting being false when they release it.
-
-        IMPORTANT NOTE: This will be called synchronously, and many audio processors will
-        call it during their audio callback. This means that not only has your handler code
-        got to be completely thread-safe, but it's also got to be VERY fast, and avoid
-        blocking. If you need to handle this event on your message thread, use this callback
-        to trigger an AsyncUpdater or ChangeBroadcaster which you can respond to later on the
-        message thread.
-    */
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}; //EMPTY IMPLEMENTATION
-
-    //juce::Timer override
-    void timerCallback() override;
-
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     SimpleEQAudioProcessor& audioProcessor;
-
-    juce::Atomic<bool> parametersChanged{ false };
 
     CustomRotarySlider peakFreqSlider, 
         peakGainSlider,
@@ -67,7 +67,9 @@ private:
         lowCutSlopeSlider, 
         highCutSlopeSlider;
 
-    //aliases
+    ResponseCurveComponent responseCurveComponent;
+
+    //attachment aliases
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
 
@@ -80,10 +82,8 @@ private:
         lowCutSlopeSliderAttachment, 
         highCutSlopeSliderAttachment;
 
-    //helper to get slider components in a vec
+    //helper to get editor components in a vec
     std::vector<juce::Component*> getComps();
-
-    MonoChain monoChain;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
 };
