@@ -60,10 +60,7 @@ struct RotarySliderWithLabels : juce::Slider
 
     juce::Rectangle<int> getSliderBounds() const;
     int getTextHeight() const { return 14; };
-    juce::String getDisplayString() const
-    {
-        return juce::String{ "text" };
-    };
+    juce::String getDisplayString() const;
 
 private:
     juce::RangedAudioParameter* param;
