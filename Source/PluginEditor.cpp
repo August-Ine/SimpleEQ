@@ -9,6 +9,68 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+void LookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+    float sliderPosProportional, float rotaryStartAngle,
+    float rotaryEndAngle, juce::Slider&) 
+{
+    using namespace juce;
+    
+    //get bounding box
+    auto bounds = Rectangle<float>(x, y, width, height);
+    //circle fill
+    g.setColour(Colour(97u, 18u, 167u));
+    g.fillEllipse(bounds);
+    //circle border
+    g.setColour(Colour(255u, 154u, 1u));
+    g.drawEllipse(bounds, 1.f);
+
+    //knob thumb rectangle
+    auto centre = bounds.getCentre();
+    Path p;
+    Rectangle<float> r;
+
+    r.setLeft(centre.getX() - 2); 
+    r.setRight(centre.getX() + 2);
+    r.setTop(bounds.getY());
+    r.setBottom(centre.getY());
+
+    p.addRectangle(r);
+    //make sure angle is ok
+    jassert(rotaryStartAngle < rotaryEndAngle);
+
+    //map slider's normalised value to radian angle
+    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+    //rotate thumb rectangle about component's centre
+    p.applyTransform(AffineTransform().rotated(sliderAngRad, centre.getX(), centre.getY()));
+
+    //draw
+    g.fillPath(p);
+}
+
+//==============================================================================
+
+void RotarySliderWithLabels::paint(juce::Graphics& g)
+{
+    using namespace juce;
+    
+    //0 deg is at 12 o'clock position
+    auto startAng = degreesToRadians(180.f + 45.f); //7 o'clock
+    auto endAng = degreesToRadians(180.f - 45.f) + MathConstants<float>::twoPi; //5 o'clock
+
+    auto range = getRange();
+
+    auto sliderBounds = getSliderBounds();
+
+    getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(),
+        sliderBounds.getHeight(), jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAng, endAng, *this);
+}
+
+juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
+{
+    return getLocalBounds();
+}
+
+//==============================================================================
 
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p): audioProcessor(p)
 {
@@ -138,6 +200,7 @@ void ResponseCurveComponent::paint(juce::Graphics& g)
 }
 
 //==============================================================================
+
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
     peakFreqSlider(*audioProcessor.apvts.getParameter("Peak Freq"), "Hz"),
