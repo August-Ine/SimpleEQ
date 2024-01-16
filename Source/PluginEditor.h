@@ -30,6 +30,8 @@ private:
     SimpleEQAudioProcessor& audioProcessor;
     MonoChain monoChain;
 
+    void updateChain();
+
     juce::Atomic<bool> parametersChanged{ false };
     
 };

@@ -179,7 +179,8 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p): audio
     for (auto param : params) {
         param->addListener(this);
     }
-
+    //persisted values
+    updateChain();
     //Atomic var boolean check timer
     startTimerHz(60);
 }
@@ -199,21 +200,26 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
 void ResponseCurveComponent::timerCallback() {
     if (parametersChanged.compareAndSetBool(false, true)) {
         //update monochain
-        auto chainSettings = getChainSettings(audioProcessor.apvts);
-
-        //peak 
-        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-
-        //cut filters
-        auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-        auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCutFilter(monoChain.get < ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
-        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+        updateChain();
 
         //signal a repaint of responseCurve
         repaint();
     }
+}
+
+void ResponseCurveComponent::updateChain() {
+
+    auto chainSettings = getChainSettings(audioProcessor.apvts);
+
+    //peak 
+    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+
+    //cut filters
+    auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCutFilter(monoChain.get < ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+    updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
 }
 
 void ResponseCurveComponent::paint(juce::Graphics& g)
@@ -369,10 +375,14 @@ void SimpleEQAudioProcessorEditor::resized()
     // subcomponents in your editor..
     
     auto bounds = getLocalBounds();
+    float hRatio = 25 / 100.f;//JUCE_LIVE_CONSTANT(25) / 100.f;
     
     //response curve
-    auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
+    auto responseArea = bounds.removeFromTop(bounds.getHeight() * hRatio);
     responseCurveComponent.setBounds(responseArea);
+
+    //padding
+    bounds.removeFromTop(5);
 
     //sliders
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
